@@ -8,6 +8,6 @@ export async function PATCH(req:Request){const a=await requireAdmin(req);if(!a)r
  const p:any={};if(role==='user'||role==='admin')p.role=role;
  if(typeof banned==='boolean'){if(banned&&t.role==='admin')return err('Najprv odober admina.');p.banned=banned;p.ban_reason=banned?String(reason||'').slice(0,200):null;}
  if(!Object.keys(p).length)return err('Nič na zmenu.');
- await a.s.from('profiles').update(p).eq('id',id);
- if(typeof banned==='boolean')await a.s.auth.admin.updateUserById(id,{ban_duration:banned?'876000h':'none'}); // zruší aj refresh tokeny
+ const{error}=await a.s.from('profiles').update(p).eq('id',id);if(error)return err('Zmena profilu zlyhala.',500);
+ if(typeof banned==='boolean'){const{error:authError}=await a.s.auth.admin.updateUserById(id,{ban_duration:banned?'876000h':'none'});if(authError)return err('Profil sa zmenil, ale blokovanie prihlásenia zlyhalo. Skús akciu zopakovať.',500);} // zruší aj refresh tokeny
  return NextResponse.json({ok:true});}

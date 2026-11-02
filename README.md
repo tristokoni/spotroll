@@ -36,3 +36,16 @@ npm run lint
 `lint` momentálne spúšťa TypeScript kontrolu. GitHub Actions vykoná `npm ci` a produkčné zostavenie pri pushi aj pull requeste. Samostatná automatizovaná testovacia sada zatiaľ nie je súčasťou projektu.
 
 Mapové podklady poskytuje OpenStreetMap. Výpočet trasy používa verejné OSRM API; čas a vhodnosť pešej trasy je potrebné overiť, verejný server negarantuje peší profil.
+
+## Stránky a funkcie
+
+- `/`: mapa a náhodný výber miesta.
+- `/explore`: vyhľadávanie podľa názvu/obce, filter vybavenia a radenie.
+- `/spots/[id]`: detail miesta, mapa, navigácia a zdieľanie odkazu.
+- `/favorites`: obľúbené miesta uložené v účte, synchronizované cez existujúcu tabuľku `favorites`.
+- `/account`: profil, úprava prezývky a odhlásenie.
+- `/my-spots`: vlastné návrhy s filtrom stavu a dôvodom zamietnutia.
+- `/submit`: pridanie miesta cez mapu a formulár.
+- `/admin`, `/admin/spots`, `/admin/users`: schvaľovanie, úprava miest, filtre, aktivácia a správa používateľov.
+
+Svetlý/tmavý režim sa predvolene riadi systémom; ručná voľba sa uchováva v prehliadači. Nové funkcie používajú existujúcu databázovú schému po migrácii 002. API profilu a obľúbených miest overuje prihlásenie a pracuje iba s údajmi daného používateľa; administrátorské API vyžaduje aktívny admin účet.

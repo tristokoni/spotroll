@@ -1,0 +1,2 @@
+import {NextResponse} from 'next/server';import {auth,err} from '@/lib/server';
+export async function PATCH(req:Request){const a=await auth(req);if(!a)return err('Prihlás sa.',401);const b=await req.json().catch(()=>null);const username=typeof b?.username==='string'?b.username.trim():'';if(username.length<2||username.length>30)return err('Prezývka musí mať 2 až 30 znakov.');const{error}=await a.s.from('profiles').update({username}).eq('id',a.id);return error?err('Profil sa nepodarilo uložiť.',500):NextResponse.json({ok:true});}
