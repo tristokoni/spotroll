@@ -1,0 +1,11 @@
+'use client';
+import Link from 'next/link';import {useAuth} from '@/lib/supabase';
+const icons:Record<string,React.ReactNode>={
+ journal:<><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4V4Z"/><path d="M14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2M7 8h3M7 12h3"/></>,
+ friends:<><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m3 3a5 5 0 0 1 3 4v3"/></>,
+ trips:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-14 4h3m4 0h3"/></>,
+ moods:<><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></>
+};
+const primary=[['/journal','journal','Môj denník','Zápisky, fotky a navštívené miesta'],['/friends','friends','Kamaráti','Nájdi svoju partiu'],['/trips','trips','Plány výletov','Poskladaj si svoj deň'],['/moods','moods','Podľa nálady','Rande, pokoj alebo opekačka']];
+const secondary=[['/explore','Objavovať miesta'],['/polls','Hlasovanie partie'],['/tips','Aktuálne tipy'],['/challenges','Výzvy'],['/favorites','Uložené miesta'],['/submit','Pridať miesto'],['/my-spots','Moje návrhy'],['/account','Môj profil']];
+export default function HomeShortcuts(){const a=useAuth();return <section aria-labelledby="shortcuts-title" className="home-shortcuts"><div className="home-section-heading"><div><p className="overline">Všetko poruke</p><h2 id="shortcuts-title">Čo dnes podnikneš?</h2></div><a href="#random-spot" className="text-link">Nechať to na náhodu ↓</a></div><div className="home-primary-grid">{primary.map(([href,icon,title,desc])=><Link href={href} className="home-primary-card" key={href}><span className={'shortcut-icon '+icon}><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icons[icon]}</svg></span><strong>{title}</strong><span>{desc}</span><span className="shortcut-arrow" aria-hidden="true">→</span></Link>)}</div><div className="home-secondary-grid">{secondary.map(([href,title])=><Link href={href} key={href}>{title}<span aria-hidden="true">→</span></Link>)}{a.role==='admin'&&<Link href="/admin">Administrácia<span aria-hidden="true">→</span></Link>}</div></section>}

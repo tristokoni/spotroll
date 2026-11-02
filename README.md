@@ -20,7 +20,7 @@ V `.env.local` nastav údaje vlastného Supabase projektu. Bez nich sa stránka 
 2. Vo Vercel vyber **Add New → Project**, pripoj GitHub a importuj `tristokoni/spotroll`.
 3. Framework je **Next.js**, root directory ponechaj koreň repozitára. Node.js nastav na 22.
 4. Pridaj premenné `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` a `SUPABASE_SERVICE_ROLE_KEY` z vlastného Supabase projektu. Service role kľúč patrí iba do serverových premenných, nikdy do GitHubu ani do premennej s prefixom `NEXT_PUBLIC_`.
-5. V Supabase SQL editore postupne spusti `supabase/migrations/001_init.sql`, potom `002_upgrade.sql` a nakoniec `003_outings.sql`. Voliteľné ukážkové údaje sú v `supabase/seed.sql`.
+5. V Supabase SQL editore postupne spusti `supabase/migrations/001_init.sql`, potom `002_upgrade.sql` `003_outings.sql` a nakoniec `004_friends.sql`. Voliteľné ukážkové údaje sú v `supabase/seed.sql`.
 6. V Supabase Authentication → URL Configuration nastav Site URL na pridelenú Vercel doménu a pridaj povolené návratové URL pre túto doménu.
 7. Vo Vercel klikni **Deploy**. Ďalšie pushnutia do hlavnej vetvy spustia nové nasadenie automaticky.
 
@@ -71,3 +71,15 @@ Migrácia `003_outings.sql` pridáva iba nové tabuľky, pravidlá prístupu a n
 ```sh
 python scripts/test-community.py
 ```
+
+## Domov, mapy a kamaráti
+
+Domovská stránka obsahuje priame odkazy na denník, kamarátov, plány, nálady, objavovanie, hlasovania, tipy, výzvy, obľúbené, pridanie miesta, vlastné návrhy a profil. Administrátor vidí aj odkaz na administráciu. Losovanie je samostatná sekcia pod týmito odkazmi. Geolokácia sa vyžiada až po kliknutí na „Použiť moju polohu“.
+
+Všetky mapy používajú kooperatívne gestá: bežné koliesko a pohyb jedným prstom posúvajú stránku; Ctrl/Cmd + koliesko, tlačidlá +/− a gesto dvoma prstami ovládajú mapu. Desktopové ťahanie mapy a klávesové ovládanie zostávajú zachované.
+
+Migrácia `004_friends.sql` pridáva jedinečný normalizovaný kľúč používateľského mena a tabuľku priateľstiev. Pred aplikáciou over, že existujúce neprázdne mená nemajú duplicity bez ohľadu na veľkosť písmen. Existujúce mená nemení. Pri registrácii s obsadeným menom sa novému účtu pridelí jedinečná prípona; zmenu na obsadené meno v profile API odmietne.
+
+`/friends` umožňuje presné vyhľadanie mena bez rozlišovania veľkých písmen, odoslanie, prijatie/odmietnutie či zrušenie žiadosti a odobratie kamaráta. Žiadosť môže prijať iba adresát. Druhá žiadosť medzi rovnakou dvojicou nevznikne. Po odmietnutí, zrušení alebo odobratí sa nová žiadosť môže poslať až po 24 hodinách. Vyhľadávanie nevracia emaily. Priateľstvo nesprístupňuje súkromný denník ani súkromné plány; na plány a hlasovania sa naďalej používajú zdieľané odkazy.
+
+`scripts/test-friends.py` s rovnakými premennými ako integračný test overuje nové API pomocou dočasných účtov, ktoré po teste odstráni. Voliteľný `TEST_BROWSER_SCRIPT` umožňuje pripojiť prehliadačový test.
