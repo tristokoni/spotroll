@@ -1,10 +1,11 @@
 import {NextResponse} from 'next/server';import {admin,auth,err} from '@/lib/server';import {km,fuzz,clean,Spot} from '@/lib/geo';
 const COLS='id,name,description,locality,latitude,longitude,image,attributes,visibility'; // bez notes/submitted_by
 export async function GET(req:Request){
+ const a=await auth(req);if(!a)return err("Prihlás sa.",401);
  if(!process.env.NEXT_PUBLIC_SUPABASE_URL||!process.env.SUPABASE_SERVICE_ROLE_KEY)return err("Databáza miest zatiaľ nie je pripojená. Správca musí nastaviť Supabase.",503);
  const q=new URL(req.url).searchParams;const lat=parseFloat(q.get('lat')||''),lng=parseFloat(q.get('lng')||''),rad=parseFloat(q.get('radius')||'0');
  const attrs=(q.get('attrs')||'').split(',').filter(Boolean).slice(0,15);
- const{data,error}=await admin().from('spots').select(COLS).eq('approved',true).eq('active',true).neq('visibility','hidden').limit(2000);
+ const{data,error}=await a.s.from('spots').select(COLS).eq('approved',true).eq('active',true).neq('visibility','hidden').limit(2000);
  if(error)return err('DB error',500);const has=!isNaN(lat)&&!isNaN(lng);
  let out=(data as Spot[]).filter(s=>attrs.every(a=>s.attributes?.[a]===true)).map(s=>{const approx=s.visibility==='approximate_location';
   const la=approx?fuzz(s.latitude):s.latitude,lo=approx?fuzz(s.longitude):s.longitude;

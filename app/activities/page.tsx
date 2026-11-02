@@ -1,0 +1,3 @@
+'use client';
+import Link from 'next/link';import {ACTIVITIES} from '@/components/ActivityShell';
+export default function Activities(){return <><div className="page-intro"><div className="overline">Viac než náhodný výlet</div><h1>Ako stráviš dnešok?</h1><p>Vyber si náladu, zvolaj partiu alebo si len naplánuj chvíľu pre seba. Tvoje výlety majú nové miesto.</p></div><div className="activity-grid">{ACTIVITIES.map(([href,label,description],i)=><Link href={href} className="activity-card" key={href}><span className="activity-number">0{i+1}</span><h2>{label}</h2><p>{description}</p><span className="subtle">Otvoriť →</span></Link>)}</div><div className="status-note">Všetky funkcie sú pre prihlásených. Zdieľané plány a hlasovania sa otvoria až po prihlásení.</div></>}

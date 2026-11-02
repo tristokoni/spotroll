@@ -1,11 +1,12 @@
 'use client';
+import {apiFetch} from '@/lib/api-client';
 import {useEffect,useState} from 'react';import dynamic from 'next/dynamic';import Wheel from '@/components/Wheel';import {Spot,ATTRS,km} from '@/lib/geo';
 const MapView=dynamic(()=>import('@/components/MapView'),{ssr:false});
 export default function Home(){
  const [user,setUser]=useState<[number,number]|null>(null),[spots,setSpots]=useState<Spot[]>([]),[radius,setRadius]=useState(25),[err,setErr]=useState(''),[win,setWin]=useState<Spot|null>(null),[wheel,setWheel]=useState(false),[route,setRoute]=useState<[number,number][]>([]),[info,setInfo]=useState(''),[loading,setLoading]=useState(true),[want,setWant]=useState<string[]>([]);
  useEffect(()=>{if(!navigator.geolocation)return setErr('GPS nie je podporovaná.');navigator.geolocation.getCurrentPosition(p=>setUser([p.coords.latitude,p.coords.longitude]),()=>setErr('GPS nedostupná – klikni do mapy a nastav polohu ručne.'));},[]);
  useEffect(()=>{setLoading(true);const q=new URLSearchParams();if(user){q.set('lat',''+user[0]);q.set('lng',''+user[1]);q.set('radius',''+radius);}if(want.length)q.set('attrs',want.join(','));
-  fetch('/api/spots?'+q).then(r=>r.json()).then(d=>{if(d.error)throw new Error(d.error);setSpots(d.spots);setWin(null);}).catch(e=>setErr(e.message||'Nepodarilo sa načítať spoty.')).finally(()=>setLoading(false));},[user,radius,want]);
+  apiFetch('/api/spots?'+q).then(r=>r.json()).then(d=>{if(d.error)throw new Error(d.error);setSpots(d.spots);setWin(null);}).catch(e=>setErr(e.message||'Nepodarilo sa načítať spoty.')).finally(()=>setLoading(false));},[user,radius,want]);
  const onWin=async(s:Spot)=>{setWin(s);setRoute([]);setInfo('');if(!user)return;try{const r=await fetch(`https://router.project-osrm.org/route/v1/foot/${user[1]},${user[0]};${s.longitude},${s.latitude}?overview=full&geometries=geojson`);const rt=(await r.json()).routes[0];setRoute(rt.geometry.coordinates.map((c:number[])=>[c[1],c[0]]));setInfo(`${(rt.distance/1000).toFixed(1)} km · ~${Math.round(rt.duration/60)} min pešo`);}catch{setInfo('Trasu sa nepodarilo vypočítať.');}};
  const dist=win&&user?km(user[0],user[1],win.latitude,win.longitude):null;
  return <div className="space-y-5"><section className="hero"><div><p className="eyebrow">MALÉ VÝLETY. DOBRÉ PRÍBEHY.</p><h1>Vypni rutinu.<br/><em>Vyraz niekam.</em></h1><p className="hero-copy">Za rohom môže byť tvoje nové obľúbené miesto. Nastav si polohu, vyber, čo hľadáš, a zvyšok nechaj na náhodu.</p></div><div className="field-note"><span>TERÉNNY ZÁPISNÍK / 01</span><strong>Plán na dnes?<br/>Nechať sa prekvapiť.</strong><small>Vyber okolie. Roztoč koleso. Vyraz.</small></div></section>

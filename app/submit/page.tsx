@@ -1,10 +1,11 @@
 'use client';
+import {apiFetch} from '@/lib/api-client';
 import {useEffect,useState} from 'react';import dynamic from 'next/dynamic';import Link from 'next/link';import {ATTRS} from '@/lib/geo';import {useAuth,hdr} from '@/lib/supabase';
 const MapView=dynamic(()=>import('@/components/MapView'),{ssr:false});
 const BADGE:Record<string,string>={pending:'⏳ čaká na schválenie',approved:'✅ schválený',rejected:'❌ zamietnutý'};
 export default function Submit(){const a=useAuth();const[pt,setPt]=useState<[number,number]|null>(null);const[f,setF]=useState({name:'',description:'',locality:'',image:'',visibility:'public'});const[at,setAt]=useState<Record<string,boolean>>({});const[msg,setMsg]=useState('');const[busy,setBusy]=useState(false);const[mine,setMine]=useState<any[]>([]);
- const load=()=>a.token&&fetch('/api/spots',{method:'PUT',headers:hdr(a.token)}).then(r=>r.json()).then(d=>setMine(d.spots||[]));useEffect(()=>{load();},[a.token]); // eslint-disable-line
- const send=async()=>{if(!pt)return setMsg('Klikni do mapy, kde spot je.');setBusy(true);try{const r=await fetch('/api/spots',{method:'POST',headers:hdr(a.token),body:JSON.stringify({...f,latitude:pt[0],longitude:pt[1],attributes:at})});const j=await r.json();
+ const load=()=>a.token&&apiFetch('/api/spots',{method:'PUT',headers:hdr(a.token)}).then(r=>r.json()).then(d=>setMine(d.spots||[]));useEffect(()=>{load();},[a.token]); // eslint-disable-line
+ const send=async()=>{if(!pt)return setMsg('Klikni do mapy, kde spot je.');setBusy(true);try{const r=await apiFetch('/api/spots',{method:'POST',headers:hdr(a.token),body:JSON.stringify({...f,latitude:pt[0],longitude:pt[1],attributes:at})});const j=await r.json();
   setMsg(r.ok?(j.pending?'Díky! Spot čaká na schválenie adminom.':'Spot pridaný.'):j.error);if(r.ok){setF({...f,name:'',description:''});setPt(null);setAt({});load();}}catch{setMsg('Odoslanie zlyhalo. Skús to znova.')}finally{setBusy(false)}};
  if(!a.ready)return <p role="status">Načítavam účet…</p>;if(!a.user)return <p>Na navrhnutie spotu sa musíš <Link className="underline" href="/login">prihlásiť</Link>.</p>;
  if(a.banned)return <p>Tvoj účet je zablokovaný.</p>;

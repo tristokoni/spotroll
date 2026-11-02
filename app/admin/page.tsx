@@ -1,16 +1,17 @@
 'use client';
+import {apiFetch} from '@/lib/api-client';
 import {usePathname} from 'next/navigation';
 import {useEffect,useState,useCallback} from 'react';import Link from 'next/link';import {Spot} from '@/lib/geo';import {useAuth,hdr} from '@/lib/supabase';
 type U={id:string;email?:string;username?:string;role:string;banned:boolean;ban_reason?:string;created_at?:string};
 export default function Admin(){const a=useAuth();const path=usePathname();const tab=path.endsWith('/users')?'users':path.endsWith('/spots')?'spots':'pending';const[busy,setBusy]=useState(false);const[editing,setEditing]=useState<Spot|null>(null);const[filter,setFilter]=useState('all');const[spots,setSpots]=useState<Spot[]>([]);const[users,setUsers]=useState<U[]>([]);const[q,setQ]=useState('');const[msg,setMsg]=useState('');
- const load=useCallback(async()=>{if(!a.token)return;const[s,u]=await Promise.all([fetch('/api/admin/spots',{headers:hdr(a.token)}),fetch('/api/admin/users',{headers:hdr(a.token)})]);
+ const load=useCallback(async()=>{if(!a.token)return;const[s,u]=await Promise.all([apiFetch('/api/admin/spots',{headers:hdr(a.token)}),apiFetch('/api/admin/users',{headers:hdr(a.token)})]);
   if(!s.ok||!u.ok){setMsg('Údaje sa nepodarilo načítať. Obnov stránku alebo sa znovu prihlás.');return;}setSpots((await s.json()).spots||[]);setUsers((await u.json()).users||[]);},[a.token]);useEffect(()=>{load().catch(()=>setMsg('Pripojenie zlyhalo. Skús obnoviť stránku.'));},[load]);
  const call=async(url:string,method:string,body:object)=>{setBusy(true);try{const r=await fetch(url,{method,headers:hdr(a.token),body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.error);setMsg('Zmena je uložená.');setEditing(null);await load();}catch(e){setMsg(e instanceof Error?e.message:'Pripojenie zlyhalo.')}finally{setBusy(false)}};
  const sp=(b:object)=>call('/api/admin/spots','PATCH',b),us=(b:object)=>call('/api/admin/users','PATCH',b);
  if(!a.ready)return <p role="status">Načítavam administráciu…</p>;if(a.role!=='admin')return <p>Nemáš oprávnenie. <Link className="underline" href="/login">Prihlásiť</Link></p>;
  const pend=spots.filter(s=>s.status==='pending'),ql=q.toLowerCase();
  const T=(k:typeof tab,l:string,n?:number)=><Link href={k==='pending'?'/admin':'/admin/'+k} aria-current={tab===k?'page':undefined}>{l}{n?` (${n})`:''}</Link>;
- return <div className="space-y-4"><div className="page-intro"><div className="overline">Správa komunity</div><h1>{tab==='users'?'Používatelia.':tab==='spots'?'Správa miest.':'Prehľad a schvaľovanie.'}</h1><p>Udržuj miesta aktuálne a komunitu v dobrých rukách.</p></div><Link href="/submit" className="btn">+ Pridať miesto</Link>
+ return <div className="space-y-4"><div className="page-intro"><div className="overline">Správa komunity</div><h1>{tab==='users'?'Používatelia.':tab==='spots'?'Správa miest.':'Prehľad a schvaľovanie.'}</h1><p>Udržuj miesta aktuálne a komunitu v dobrých rukách.</p></div><div className="flex gap-3"><Link href="/submit" className="btn">+ Pridať miesto</Link><Link href="/tips" className="btn btn-line">Moderovať tipy</Link></div>
  <div className="grid grid-cols-3 gap-2 text-center">{[['Spoty',spots.length],['Čakajú',pend.length],['Používatelia',users.length]].map(([l,n])=><div key={l as string} className="card !p-3"><div className="font-display text-2xl font-extrabold">{n}</div><div className="text-xs text-ink/60">{l}</div></div>)}</div>
  <div className="section-tabs">{T('pending','Na schválenie',pend.length)}{T('spots','Spoty')}{T('users','Používatelia')}</div>{msg&&<p className="text-sm font-semibold" role="status">{msg}</p>}
  {tab==='pending'&&(pend.length?pend.map(s=><div key={s.id} className="card space-y-2"><b>{s.name}</b><p className="text-sm text-ink/70">{s.description}</p><p className="text-xs">{s.locality} · {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</p>
