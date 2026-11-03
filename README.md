@@ -83,3 +83,5 @@ Migrácia `004_friends.sql` pridáva jedinečný normalizovaný kľúč použív
 `/friends` umožňuje presné vyhľadanie mena bez rozlišovania veľkých písmen, odoslanie, prijatie/odmietnutie či zrušenie žiadosti a odobratie kamaráta. Žiadosť môže prijať iba adresát. Druhá žiadosť medzi rovnakou dvojicou nevznikne. Po odmietnutí, zrušení alebo odobratí sa nová žiadosť môže poslať až po 24 hodinách. Vyhľadávanie nevracia emaily. Priateľstvo nesprístupňuje súkromný denník ani súkromné plány; na plány a hlasovania sa naďalej používajú zdieľané odkazy.
 
 `scripts/test-friends.py` s rovnakými premennými ako integračný test overuje nové API pomocou dočasných účtov, ktoré po teste odstráni. Voliteľný `TEST_BROWSER_SCRIPT` umožňuje pripojiť prehliadačový test.
+
+Losovanie sa spúšťa jedným kliknutím na „Vytočiť miesto“: otvorí sa modálne okno a koleso sa automaticky roztočí. Okno možno zatvoriť tlačidlom, klávesom Escape alebo kliknutím mimo neho; nedokončené losovanie sa tým zruší. Po výsledku možno miesto zobraziť alebo jedným kliknutím roztočiť znova. Režim obmedzeného pohybu skracuje animáciu.

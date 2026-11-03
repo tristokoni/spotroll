@@ -1,10 +1,11 @@
 'use client';
 import HomeShortcuts from '@/components/HomeShortcuts';
 import {apiFetch} from '@/lib/api-client';
-import {useEffect,useState} from 'react';import dynamic from 'next/dynamic';import Wheel from '@/components/Wheel';import {Spot,ATTRS,km} from '@/lib/geo';
+import {useEffect,useRef,useState} from 'react';import dynamic from 'next/dynamic';import WheelModal from '@/components/WheelModal';import {Spot,ATTRS,km} from '@/lib/geo';
 const MapView=dynamic(()=>import('@/components/MapView'),{ssr:false});
 export default function Home(){
- const [user,setUser]=useState<[number,number]|null>(null),[spots,setSpots]=useState<Spot[]>([]),[radius,setRadius]=useState(25),[err,setErr]=useState(''),[win,setWin]=useState<Spot|null>(null),[wheel,setWheel]=useState(false),[route,setRoute]=useState<[number,number][]>([]),[info,setInfo]=useState(''),[loading,setLoading]=useState(true),[want,setWant]=useState<string[]>([]),[locating,setLocating]=useState(false);
+ const [user,setUser]=useState<[number,number]|null>(null),[spots,setSpots]=useState<Spot[]>([]),[radius,setRadius]=useState(25),[err,setErr]=useState(''),[win,setWin]=useState<Spot|null>(null),[spinSpots,setSpinSpots]=useState<Spot[]|null>(null),[route,setRoute]=useState<[number,number][]>([]),[info,setInfo]=useState(''),[loading,setLoading]=useState(true),[want,setWant]=useState<string[]>([]),[locating,setLocating]=useState(false);
+ const resultRef=useRef<HTMLDivElement>(null);
  const locate=()=>{if(!navigator.geolocation)return setErr('Poloha nie je podporovaná. Klikni do mapy a nastav ju ručne.');setLocating(true);navigator.geolocation.getCurrentPosition(p=>{setUser([p.coords.latitude,p.coords.longitude]);setLocating(false);setErr('')},()=>{setErr('Polohu sa nepodarilo získať. Klikni do mapy a nastav ju ručne.');setLocating(false)},{timeout:10000});};
  useEffect(()=>{setLoading(true);const q=new URLSearchParams();if(user){q.set('lat',''+user[0]);q.set('lng',''+user[1]);q.set('radius',''+radius);}if(want.length)q.set('attrs',want.join(','));
   apiFetch('/api/spots?'+q).then(r=>r.json()).then(d=>{if(d.error)throw new Error(d.error);setSpots(d.spots);setWin(null);}).catch(e=>setErr(e.message||'Nepodarilo sa načítať spoty.')).finally(()=>setLoading(false));},[user,radius,want]);
@@ -17,8 +18,10 @@ export default function Home(){
  <div className="map-panel overflow-hidden border border-ink/10"><MapView spots={win?[]:spots} user={user} target={win} route={route} onPick={(a,b)=>setUser([a,b])}/></div>
  <div className="filter-heading"><span>Čo nesmie chýbať?</span><small>Vyber ľubovoľný počet</small></div><div className="flex flex-wrap gap-1.5">{Object.entries(ATTRS).map(([k,l])=><button key={k} onClick={()=>setWant(w=>w.includes(k)?w.filter(x=>x!==k):[...w,k])} className={`chip ${want.includes(k)?'chip-on':''}`} aria-pressed={want.includes(k)}>{l.replace(/^\S+\s/,'')}</button>)}</div>
  <div className="flex gap-3 items-center text-sm font-semibold">Rádius<select aria-label="Rádius hľadania" className="inp !w-auto" value={radius} onChange={e=>setRadius(+e.target.value)}>{[1,5,10,25,50].map(r=><option key={r} value={r}>{r} km</option>)}</select><span className="ml-auto text-ink/60">{loading?'Načítavam…':`${spots.length} spotov`}</span></div>
- {!wheel?<button disabled={loading||!spots.length} onClick={()=>setWheel(true)} className="btn btn-trail w-full !py-5 !text-2xl font-display">Vytočiť miesto</button>:spots.length?<Wheel spots={spots} onWin={onWin}/>:<div className="card text-center">Nič nezodpovedá filtrom. Zväčši rádius alebo ubierni filtre.</div>}
- {win&&<div className="card space-y-3 !border-trail !border-2">{win.image&&<img src={win.image} alt={win.name} referrerPolicy="no-referrer" className="rounded-lg w-full h-44 object-cover"/>}
+ <button disabled={loading||!spots.length} onClick={()=>setSpinSpots([...spots])} className="btn btn-trail w-full !py-5 !text-2xl font-display">Vytočiť miesto</button>
+ {!loading&&!spots.length&&<p className="card text-center">Nič nezodpovedá filtrom. Zväčši rádius alebo uber filtre.</p>}
+ {spinSpots&&<WheelModal spots={spinSpots} onWin={onWin} onClose={()=>setSpinSpots(null)} onView={()=>{setSpinSpots(null);requestAnimationFrame(()=>{resultRef.current?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});resultRef.current?.focus({preventScroll:true})})}}/>}
+ {win&&<div ref={resultRef} tabIndex={-1} className="card space-y-3 !border-trail !border-2 scroll-mt-40">{win.image&&<img src={win.image} alt={win.name} referrerPolicy="no-referrer" className="rounded-lg w-full h-44 object-cover"/>}
  <h2 className="font-display font-extrabold text-3xl">{win.name}</h2><p className="text-ink/70">{win.description}</p>
  <p className="text-sm font-semibold">{win.locality&&`${win.locality} · `}{win.latitude.toFixed(5)}, {win.longitude.toFixed(5)}{win.approx&&' (približne)'}{dist!==null&&` · ${dist.toFixed(1)} km`}</p>{info&&<p className="text-lake text-sm font-semibold">{info}</p>}
  <div className="flex flex-wrap gap-1.5">{Object.entries(ATTRS).filter(([k])=>win.attributes?.[k]!==undefined).map(([k,l])=><span key={k} className={`chip ${win.attributes[k]?'chip-on':'line-through opacity-50'}`}>{l}</span>)}</div>
