@@ -20,7 +20,7 @@ V `.env.local` nastav údaje vlastného Supabase projektu. Bez nich sa stránka 
 2. Vo Vercel vyber **Add New → Project**, pripoj GitHub a importuj `tristokoni/spotroll`.
 3. Framework je **Next.js**, root directory ponechaj koreň repozitára. Node.js nastav na 22.
 4. Pridaj premenné `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` a `SUPABASE_SERVICE_ROLE_KEY` z vlastného Supabase projektu. Service role kľúč patrí iba do serverových premenných, nikdy do GitHubu ani do premennej s prefixom `NEXT_PUBLIC_`.
-5. V Supabase SQL editore postupne spusti `supabase/migrations/001_init.sql`, potom `002_upgrade.sql` `003_outings.sql` a nakoniec `004_friends.sql`. Voliteľné ukážkové údaje sú v `supabase/seed.sql`.
+5. V Supabase SQL editore postupne spusti `supabase/migrations/001_init.sql`, potom `002_upgrade.sql` `003_outings.sql` `004_friends.sql` a nakoniec `005_cache_drops.sql`. Voliteľné ukážkové údaje sú v `supabase/seed.sql`.
 6. V Supabase Authentication → URL Configuration nastav Site URL na pridelenú Vercel doménu a pridaj povolené návratové URL pre túto doménu.
 7. Vo Vercel klikni **Deploy**. Ďalšie pushnutia do hlavnej vetvy spustia nové nasadenie automaticky.
 
@@ -85,3 +85,18 @@ Migrácia `004_friends.sql` pridáva jedinečný normalizovaný kľúč použív
 `scripts/test-friends.py` s rovnakými premennými ako integračný test overuje nové API pomocou dočasných účtov, ktoré po teste odstráni. Voliteľný `TEST_BROWSER_SCRIPT` umožňuje pripojiť prehliadačový test.
 
 Losovanie sa spúšťa jedným kliknutím na „Vytočiť miesto“: otvorí sa modálne okno a koleso sa automaticky roztočí. Okno možno zatvoriť tlačidlom, klávesom Escape alebo kliknutím mimo neho; nedokončené losovanie sa tým zruší. Po výsledku možno miesto zobraziť alebo jedným kliknutím roztočiť znova. Režim obmedzeného pohybu skracuje animáciu.
+
+## Dead drop – geocachingové odovzdávky
+
+`/drops` je dostupné priamo z domova, Zážitkov aj profilu. Funkcia je iba pre prihlásených a pracuje s dvoma hráčmi:
+
+- **Uložil som kešku:** autor zadá názov, obsah, nápovedu, presnú polohu a používateľské meno príjemcu. Keška je hneď označená ako pripravená. Vyzdvihnutie potvrdí iba pozvaný príjemca.
+- **Herná objednávka:** autor požiada konkrétneho používateľa o prípravu kešky na navrhnutom mieste. Pozvaný používateľ potvrdí prípravu a skutočné GPS súradnice; autor objednávky následne potvrdí vyzdvihnutie. Funkcia neobsahuje platby.
+
+Poloha sa vyberá kliknutím do mapy, jednorazovou geolokáciou zariadenia alebo ručným zadaním šírky/dĺžky. Ručné údaje sa potvrdzujú tlačidlom „Použiť súradnice“; prijíma sa bodka aj desatinná čiarka. GPS výsledok zobrazuje odhad presnosti zariadenia. API uchováva zadané súradnice bez rozmazania.
+
+Pozvania sa zobrazujú priamo v sekcii Dead drop. Zoznam má filtre pre aktívne skrýše, vyzdvihnutie, prípravu a históriu. Stav sa obnoví po akcii alebo tlačidlom; emailové ani push notifikácie sa neposielajú. Obaja účastníci môžu nedokončenú odovzdávku zrušiť. Dokončenie alebo zrušenie je konečné a ostáva v histórii s časom udalosti; pri vyzdvihnutí možno zanechať krátky odkaz.
+
+Migrácia `005_cache_drops.sql` pridáva súkromnú tabuľku s RLS a kontrolami účastníkov/stavu. Ani administrátorská rola v aplikácii nedáva prístup k cudzej odovzdávke; API povoľuje čítanie iba odosielateľovi a príjemcovi. Odkaz sám o sebe prístup neudeľuje. Zmeny stavu sú atomické, takže súbežné vyzdvihnutie a zrušenie nemôžu obe uspieť. Nové odovzdávky sú obmedzené na 20 denne na tvorcu.
+
+`scripts/test-drops.py` testuje autorizáciu, presné GPS, validáciu, oba priebehy, zrušenie, opakované a súbežné potvrdenia a RLS. Používa dočasné účty a po teste ich aj ich záznamy odstráni; vyžaduje rovnaké Supabase premenné a `TEST_APP_URL` ako ostatné integračné testy.
