@@ -100,3 +100,11 @@ Pozvania sa zobrazujú priamo v sekcii Dead drop. Zoznam má filtre pre aktívne
 Migrácia `005_cache_drops.sql` pridáva súkromnú tabuľku s RLS a kontrolami účastníkov/stavu. Ani administrátorská rola v aplikácii nedáva prístup k cudzej odovzdávke; API povoľuje čítanie iba odosielateľovi a príjemcovi. Odkaz sám o sebe prístup neudeľuje. Zmeny stavu sú atomické, takže súbežné vyzdvihnutie a zrušenie nemôžu obe uspieť. Nové odovzdávky sú obmedzené na 20 denne na tvorcu.
 
 `scripts/test-drops.py` testuje autorizáciu, presné GPS, validáciu, oba priebehy, zrušenie, opakované a súbežné potvrdenia a RLS. Používa dočasné účty a po teste ich aj ich záznamy odstráni; vyžaduje rovnaké Supabase premenné a `TEST_APP_URL` ako ostatné integračné testy.
+
+## Obnova hesla
+
+Na `/login` je „Zabudnuté heslo?“: Supabase odošle obnovovací odkaz s návratom na `/reset-password`. Táto stránka je dostupná bez prihlásenia a nový password uloží až po platnej recovery relácii. Vyžaduje aspoň 10 znakov a zhodu dvoch polí; po zmene odhlási lokálnu reláciu a ponúkne prihlásenie. Neplatný alebo expirovaný odkaz ponúkne návrat na prihlásenie. Odpoveď po žiadosti neprezrádza existenciu účtu.
+
+V Supabase Authentication URL Configuration musí byť produkčný `/reset-password` povolený medzi Redirect URLs (existujúce `https://spotroll-gamma.vercel.app/**` ho pokrýva). **Doručovanie:** bez vlastného SMTP vstavaný Supabase mailer obmedzuje adresátov na členov projektového tímu; pre bežných používateľov treba nastaviť SMTP v Supabase Authentication. Samotné nasadenie UI toto obmedzenie neodstráni. E-mailové potvrdenie registrácie ostáva zapnuté.
+
+`scripts/test-password-reset.cjs` overuje obnovu cez dočasný Supabase účet a Chromium proti lokálnej aplikácii na porte 3002. Vyžaduje `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` a Playwright. Žiadosť o e-mail a limit sú simulované; recovery relácia, zmena hesla a následné prihlásenie používajú skutočné Supabase API. Test neoveruje doručenie e-mailu a dočasný účet odstráni.
